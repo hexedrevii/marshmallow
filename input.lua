@@ -12,6 +12,7 @@
 ---@field private __mappings table<string, mapping>
 ---@field private __pressedKeyboard table<love.KeyConstant, boolean|nil>
 ---@field private __pressedGamepad  table<love.GamepadButton, boolean|nil>
+---@field private __joystick love.Joystick?
 local input = {}
 input.__index = input
 
@@ -40,9 +41,17 @@ function input:keyreleased(key)
 end
 
 function input:gamepadpressed(joystick, button)
+  if self.__joystick ~= joystick then
+    self.__joystick = joystick
+  end
+
   self.__pressedGamepad[button] = true
 end
 function input:gamepadreleased(joystick, button)
+  if self.__joystick ~= joystick then
+    self.__joystick = joystick
+  end
+
   self.__pressedGamepad[button] = nil
 end
 -- @region Love Callbacks
@@ -107,13 +116,15 @@ function input:isDown(action)
   if not map then return false end
 
   local key = map.keyboard
-  if key and self.__pressedKeyboard[key] then
+  if key and love.keyboard.isDown(key) then
     return true
   end
 
   local button = map.gamepad
-  if button and self.__pressedGamepad[button] then
-    return true
+  if button and self.__joystick and self.__joystick:isConnected() then
+    if self.__joystick:isGamepadDown(button) then
+      return true
+    end
   end
 
   return false
