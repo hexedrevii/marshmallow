@@ -12,7 +12,8 @@
 ---@field private __mappings table<string, mapping>
 ---@field private __pressedKeyboard table<love.KeyConstant, boolean|nil>
 ---@field private __pressedGamepad  table<love.GamepadButton, boolean|nil>
----@field private __joystick love.Joystick?
+---@field joystick love.Joystick?
+---@field deadzone number?
 local input = {}
 input.__index = input
 
@@ -23,6 +24,9 @@ local _mapping = {}
 
 function input.new()
   local i = {
+    joystick = nil,
+    deadzone = nil,
+
     __mappings = {},
 
     __pressedKeyboard  = {},
@@ -41,20 +45,30 @@ function input:keyreleased(key)
 end
 
 function input:gamepadpressed(joystick, button)
-  if self.__joystick ~= joystick then
-    self.__joystick = joystick
+  if self.joystick ~= joystick then
+    self.joystick = joystick
   end
 
   self.__pressedGamepad[button] = true
 end
 function input:gamepadreleased(joystick, button)
-  if self.__joystick ~= joystick then
-    self.__joystick = joystick
+  if self.joystick ~= joystick then
+    self.joystick = joystick
   end
 
   self.__pressedGamepad[button] = nil
 end
+
+function input:gamepadaxis(joystick, axis, value)
+  if self.joystick ~= joystick then
+    self.joystick = joystick
+  end
+end
 -- @region Love Callbacks
+
+function input:setDeadzone(deadzone)
+  self.deadzone = deadzone
+end
 
 ---@param name string
 ---@param keyboard love.KeyConstant?
@@ -66,24 +80,35 @@ function input:pushKeymap(name, keyboard, gamepad)
   }
 end
 
----Get axis with -1 to 1
+---Get axis in -1 or 1 for buttons
 ---@param negative string The negative mapping name.
----@param positive string The ppsitive mapping name.
+---@param positive string The positive mapping name.
 ---@return integer
-function input:getAxis(negative, positive)
-  if input:isDown(negative) and input:isDown(positive) then
+function input:getAbsoluteAxis(negative, positive)
+  if self:isDown(negative) and self:isDown(positive) then
     return 0
   end
 
-  if input:isDown(negative) then
+  if self:isDown(negative) then
     return -1
   end
 
-  if input:isDown(positive) then
+  if self:isDown(positive) then
     return 1
   end
 
   return 0
+end
+
+function input:getJoystickAxis(axis)
+  if not self.joystick then return nil end
+
+  local axisVal = self.joystick:getGamepadAxis(axis)
+  if self.deadzone and math.abs(axisVal) < self.deadzone then
+    return nil
+  end
+
+  return axisVal
 end
 
 ---@param action string
@@ -121,8 +146,8 @@ function input:isDown(action)
   end
 
   local button = map.gamepad
-  if button and self.__joystick and self.__joystick:isConnected() then
-    if self.__joystick:isGamepadDown(button) then
+  if button and self.joystick and self.joystick:isConnected() then
+    if self.joystick:isGamepadDown(button) then
       return true
     end
   end

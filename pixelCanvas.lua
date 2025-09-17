@@ -19,8 +19,8 @@ pixelCanvas.__index = pixelCanvas
 
 ---@param w number
 ---@param h number
----@param filter 'nearest'|'linear'
----@param clearColour number[]
+---@param filter 'nearest'|'linear'?
+---@param clearColour number[]?
 ---@return pixelCanvas
 function pixelCanvas.new(w, h, filter, clearColour)
   filter = filter or 'nearest'
@@ -67,7 +67,10 @@ function pixelCanvas:getMouseWorld(sx, sy)
   local world_x = (mx - x) / scale
   local world_y = (my - y) / scale
 
-  return world_x, world_y
+
+  return
+    math.max(0, math.min(world_x, self.w)),
+    math.max(0, math.min(world_y, self.h))
 end
 
 function pixelCanvas:set()

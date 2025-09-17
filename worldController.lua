@@ -19,7 +19,7 @@ worldController.__index = worldController
 ---@field draw function
 local _world = {}
 
-function worldController:new()
+function worldController.new()
   local w = {
     active = nil
   }
