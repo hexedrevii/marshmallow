@@ -33,6 +33,10 @@ function mathx.sign(x)
   end
 end
 
+function mathx.randf(min, max)
+  return min + (max - min) * love.math.random()
+end
+
 ---@param rect1 {x: number, y: number, w: number, h: number}
 ---@param rect2 {x: number, y: number, w: number, h: number}
 ---@return boolean
