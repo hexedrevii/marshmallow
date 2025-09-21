@@ -12,7 +12,10 @@
 ---@field private __spriteSheet love.Image
 ---@field private __quads love.Quad[]
 ---@field duration number
+---@field playOnce boolean
+---@field onEnd function
 ---@field private __time number
+---@field private __stopped boolean
 local spritesheet = {}
 spritesheet.__index = spritesheet
 
@@ -23,6 +26,10 @@ function spritesheet:new(img, w, h, duration)
 
     duration = duration or 1,
     __time = 0,
+    __stopped = false,
+
+    playOnce = false,
+    onEnd = nil
   }
 
   for y = 0, a.__spriteSheet:getHeight() - h, h do
@@ -36,11 +43,21 @@ end
 
 function spritesheet:reset()
   self.__time = 0
+  self.__stopped = false
 end
 
 function spritesheet:update(delta)
+  if self.__stopped then return end
+
   self.__time = self.__time + delta
   if self.__time >= self.duration then
+    if self.playOnce then
+      self.__stopped = true
+      if self.onEnd then
+        self.onEnd(self)
+      end
+    end
+
     self.__time = 0
   end
 end
