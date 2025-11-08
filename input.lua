@@ -12,6 +12,7 @@
 ---@field private __mappings table<string, mapping>
 ---@field private __pressedKeyboard table<love.KeyConstant, boolean|nil>
 ---@field private __pressedGamepad  table<love.GamepadButton, boolean|nil>
+---@field private __pressedMouse    table<integer, boolean|nil>
 ---@field joystick love.Joystick?
 ---@field deadzone number?
 local input = {}
@@ -20,6 +21,7 @@ input.__index = input
 ---@class mapping
 ---@field keyboard love.KeyConstant?
 ---@field gamepad love.GamepadButton?
+---@field mouse   integer?
 local _mapping = {}
 
 function input.new()
@@ -30,7 +32,8 @@ function input.new()
     __mappings = {},
 
     __pressedKeyboard  = {},
-    __pressedGamepad   = {}
+    __pressedGamepad   = {},
+    __pressedMouse     = {},
   }
 
   return setmetatable(i, input)
@@ -42,6 +45,14 @@ function input:keypressed(key)
 end
 function input:keyreleased(key)
   self.__pressedKeyboard[key] = nil
+end
+
+function input:mousepressed(x, y, button)
+  self.__pressedMouse[button] = true
+end
+
+function input:mousereleased(x, y, button)
+  self.__pressedMouse[button] = nil
 end
 
 function input:gamepadpressed(joystick, button)
@@ -73,10 +84,12 @@ end
 ---@param name string
 ---@param keyboard love.KeyConstant?
 ---@param gamepad love.GamepadButton?
-function input:pushKeymap(name, keyboard, gamepad)
+---@param mouse   integer?
+function input:pushKeymap(name, keyboard, gamepad, mouse)
   self.__mappings[name] = {
     keyboard = keyboard,
     gamepad = gamepad,
+    mouse = mouse
   }
 end
 
@@ -131,6 +144,12 @@ function input:isPressed(action)
     return true
   end
 
+  local mouse = map.mouse
+  if mouse and self.__pressedMouse[mouse] then
+    self.__pressedMouse[mouse] = nil
+    return true
+  end
+
   return false
 end
 
@@ -150,6 +169,11 @@ function input:isDown(action)
     if self.joystick:isGamepadDown(button) then
       return true
     end
+  end
+
+  local mouse = map.mouse
+  if mouse and love.mouse.isDown(mouse) then
+    return true
   end
 
   return false
