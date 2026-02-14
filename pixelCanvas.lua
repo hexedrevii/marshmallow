@@ -24,10 +24,11 @@ pixelCanvas.__index = pixelCanvas
 ---@return pixelCanvas
 function pixelCanvas.new(w, h, filter, clearColour)
   filter = filter or 'nearest'
-  clearColour = clearColour or {0, 0, 0}
+  clearColour = clearColour or { 0, 0, 0 }
 
   local c = {
-    w = w, h = h,
+    w = w,
+    h = h,
     __body = love.graphics.newCanvas(w, h),
 
     clearColour = clearColour
@@ -60,27 +61,32 @@ function pixelCanvas:getMouseWorld(sx, sy)
   if sx then screen_x = sx end
   if sy then screen_y = sy end
 
-  local scale_x,  scale_y  = self.w * scale, self.h * scale
-  local x, y = (screen_x - scale_x) * 0.5, (screen_y - scale_y) * 0.5
+  local scale_x, scale_y = self.w * scale, self.h * scale
+  local x, y             = (screen_x - scale_x) * 0.5, (screen_y - scale_y) * 0.5
 
   -- transform from screen space → canvas space
-  local world_x = (mx - x) / scale
-  local world_y = (my - y) / scale
+  local world_x          = (mx - x) / scale
+  local world_y          = (my - y) / scale
 
 
   return
-    math.max(0, math.min(world_x, self.w)),
-    math.max(0, math.min(world_y, self.h))
+      math.max(0, math.min(world_x, self.w)),
+      math.max(0, math.min(world_y, self.h))
 end
 
-function pixelCanvas:set()
-  love.graphics.setCanvas(self.__body)
+---@param stencil boolean?
+function pixelCanvas:set(stencil)
+  if stencil then
+    love.graphics.setCanvas({ self.__body, stencil = true })
+  else
+    love.graphics.setCanvas(self.__body)
+  end
 end
 
 ---@param sx number?
 ---@param sy number?
 function pixelCanvas:render(sx, sy)
-   love.graphics.setCanvas()
+  love.graphics.setCanvas()
 
   local scale = self:getScale(sx, sy)
 
@@ -88,8 +94,8 @@ function pixelCanvas:render(sx, sy)
   if sx then screen_x = sx end
   if sy then screen_y = sy end
 
-  local scale_x,  scale_y  = self.w * scale, self.h * scale
-  local x, y = (screen_x - scale_x) * 0.5, (screen_y - scale_y) * 0.5
+  local scale_x, scale_y = self.w * scale, self.h * scale
+  local x, y             = (screen_x - scale_x) * 0.5, (screen_y - scale_y) * 0.5
 
   love.graphics.clear(self.clearColour)
   love.graphics.draw(self.__body, x, y, 0, scale, scale)
